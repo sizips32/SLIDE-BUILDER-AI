@@ -1,0 +1,5 @@
+{
+  "name": "슬라이드 빌더 AI BASIC (Slide Builder AI)",
+  "description": "Gemini API를 사용하여 비정형 텍스트로부터 프레젠테이션 구성안을 JSON 형식으로 자동 생성하고 편집하는 웹 애플리케이션입니다.",
+  "requestFramePermissions": []
+}

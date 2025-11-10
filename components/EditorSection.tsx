@@ -4,6 +4,7 @@ import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { ValidationStatus } from '../types';
 import { getGeminiResponse, analyzeDocumentContent, PromptFormat } from '../services/geminiService';
 import { parseFile } from '../utils/fileParser';
+import Collapsible from './Collapsible';
 
 interface EditorSectionProps {
   slideData: string;
@@ -202,6 +203,73 @@ const EditorSection: React.FC<EditorSectionProps> = ({ slideData, setSlideData }
               <span className="text-sm text-gray-800 font-medium">C-Suite 보고 형식</span>
             </label>
           </div>
+          {promptFormat === 'csuite' && (
+            <div className="mt-2">
+              <Collapsible title="📊 C-Suite 보고 형식이란? (클릭하여 자세히 보기)">
+                <div className="space-y-4 text-sm text-gray-700">
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">🎯 정의</h4>
+                    <p className="mb-2">
+                      C-Suite 보고 형식은 <strong>최고 경영진(CEO, CFO, CTO 등)</strong>을 위한 전문적인 보고 자료 생성 형식입니다. 
+                      경영진이 빠르게 핵심 정보를 파악하고 의사결정을 내릴 수 있도록 최적화되어 있습니다.
+                    </p>
+                  </div>
+                  
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">✨ 핵심 특징</h4>
+                    <ul className="list-disc list-inside space-y-1 ml-2">
+                      <li><strong>간결성:</strong> 한 슬라이드에 핵심 메시지 하나만 전달</li>
+                      <li><strong>수치 중심:</strong> 정성적 설명보다 정량적 데이터(KPI, 지표) 우선</li>
+                      <li><strong>시각적 임팩트:</strong> KPI 카드, 차트, 대시보드 스타일 활용</li>
+                      <li><strong>실행 가능성:</strong> 구체적인 액션 아이템과 다음 단계 명시</li>
+                      <li><strong>리스크 관리:</strong> 위험 요소와 기회를 명확히 구분</li>
+                    </ul>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">📋 권장 슬라이드 구성</h4>
+                    <ol className="list-decimal list-inside space-y-1 ml-2">
+                      <li><strong>표지:</strong> 보고 주제와 날짜</li>
+                      <li><strong>핵심 지표 요약:</strong> KPI 카드 또는 수치 비교 (1~2장)</li>
+                      <li><strong>현황 분석:</strong> As-Is/To-Be 비교 또는 진행률 (1~2장)</li>
+                      <li><strong>전략/계획:</strong> 타임라인 또는 프로세스 (1~2장)</li>
+                      <li><strong>액션 아이템:</strong> 표 또는 헤더 카드 (1장)</li>
+                      <li><strong>맺음말:</strong> 결론 및 다음 단계</li>
+                    </ol>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">🎨 우선 사용되는 슬라이드 타입</h4>
+                    <div className="grid grid-cols-2 gap-2 text-xs">
+                      <div className="bg-blue-50 p-2 rounded">• KPI 카드</div>
+                      <div className="bg-blue-50 p-2 rounded">• 수치 비교</div>
+                      <div className="bg-blue-50 p-2 rounded">• 막대 비교</div>
+                      <div className="bg-blue-50 p-2 rounded">• 진행률</div>
+                      <div className="bg-blue-50 p-2 rounded">• 표</div>
+                      <div className="bg-blue-50 p-2 rounded">• 타임라인</div>
+                    </div>
+                  </div>
+
+                  <div>
+                    <h4 className="font-semibold text-gray-900 mb-2">💡 사용 팁</h4>
+                    <ul className="list-disc list-inside space-y-1 ml-2">
+                      <li>입력 텍스트에 <strong>수치, 지표, 목표 달성률</strong> 등을 포함하면 더 효과적입니다</li>
+                      <li>예: "매출 1,250억원 (목표 대비 125%), 신규 고객 2,500명 (10% 증가)"</li>
+                      <li>액션 아이템은 <strong>책임자, 일정, 예산</strong>을 명시하면 좋습니다</li>
+                      <li>배경 설명은 최소화하고 <strong>결론과 다음 단계</strong>에 집중하세요</li>
+                    </ul>
+                  </div>
+
+                  <div className="p-3 bg-indigo-50 border border-indigo-200 rounded-lg">
+                    <p className="text-xs text-indigo-900">
+                      <strong>💼 적합한 사용 사례:</strong> 분기별 성과 보고, 프로젝트 현황 보고, 
+                      전략 제안서, 예산 승인 요청, 신규 사업 제안 등
+                    </p>
+                  </div>
+                </div>
+              </Collapsible>
+            </div>
+          )}
         </div>
 
         <div className="p-4 bg-amber-50 border-2 border-dashed border-amber-300 rounded-lg">

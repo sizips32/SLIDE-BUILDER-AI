@@ -9,13 +9,15 @@ import {
   GEMINI_DOCUMENT_ANALYSIS_PROMPT
 } from '../constants';
 
-const API_KEY = process.env.API_KEY;
+const API_KEY = process.env.API_KEY || process.env.GEMINI_API_KEY;
 
 if (!API_KEY) {
   console.error("API_KEY environment variable not set.");
+  console.error("Please set GEMINI_API_KEY in your .env file or environment variables.");
 }
 
-const ai = new GoogleGenAI({ apiKey: API_KEY! });
+// API_KEY가 없어도 인스턴스는 생성하되, 실제 사용 시 에러를 반환하도록 함
+const ai = API_KEY ? new GoogleGenAI({ apiKey: API_KEY }) : null;
 
 const model = 'gemini-2.5-flash';
 
@@ -26,8 +28,8 @@ export interface GeminiResponse {
 }
 
 export const getGeminiResponse = async (prompt: string, format: PromptFormat, useWebSearch: boolean): Promise<GeminiResponse> => {
-  if (!API_KEY) {
-    return Promise.reject(new Error("API_KEY가 설정되지 않았습니다. 환경 변수를 확인해주세요."));
+  if (!API_KEY || !ai) {
+    return Promise.reject(new Error("API_KEY가 설정되지 않았습니다. .env 파일에 GEMINI_API_KEY를 설정해주세요."));
   }
 
   const systemInstruction = 
@@ -78,8 +80,8 @@ export const getGeminiResponse = async (prompt: string, format: PromptFormat, us
 };
 
 export const analyzeDocumentContent = async (content: string | any[]): Promise<string> => {
-  if (!API_KEY) {
-    return Promise.reject(new Error("API_KEY가 설정되지 않았습니다. 환경 변수를 확인해주세요."));
+  if (!API_KEY || !ai) {
+    return Promise.reject(new Error("API_KEY가 설정되지 않았습니다. .env 파일에 GEMINI_API_KEY를 설정해주세요."));
   }
 
   const requestContents = Array.isArray(content) ? { parts: content } : content;
@@ -115,8 +117,8 @@ export const analyzeDocumentContent = async (content: string | any[]): Promise<s
 
 
 export const regenerateSlideContent = async (slide: any, userRequest: string): Promise<any> => {
-  if (!API_KEY) {
-    return Promise.reject(new Error("API_KEY가 설정되지 않았습니다."));
+  if (!API_KEY || !ai) {
+    return Promise.reject(new Error("API_KEY가 설정되지 않았습니다. .env 파일에 GEMINI_API_KEY를 설정해주세요."));
   }
 
   const prompt = `

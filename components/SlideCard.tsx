@@ -1,11 +1,14 @@
 
 
 import React, { useState } from 'react';
+import { Slide } from '../types';
+import { Spinner } from './Spinner';
+import { buttonStyles, inputStyles } from '../utils/styles';
 
 interface SlideCardProps {
   index: number;
-  slide: any;
-  onUpdate: (index: number, updatedSlide: any) => void;
+  slide: Slide;
+  onUpdate: (index: number, updatedSlide: Slide) => void;
   onDelete: (index: number) => void;
   onMove: (index: number, direction: 'up' | 'down') => void;
   onRegenerate: (index: number, userRequest: string) => void;
@@ -23,8 +26,8 @@ const SlideCard: React.FC<SlideCardProps> = ({ index, slide, onUpdate, onDelete,
     onRegenerate(index, userRequest);
   };
 
-  const handleFieldChange = (field: string, value: any) => {
-    onUpdate(index, { ...slide, [field]: value });
+  const handleFieldChange = (field: string, value: string | number | boolean | string[] | [string[], string[]]) => {
+    onUpdate(index, { ...slide, [field]: value } as Slide);
   };
 
   const handleArrayChange = (field: string, itemIndex: number, value: string) => {
@@ -58,7 +61,7 @@ const SlideCard: React.FC<SlideCardProps> = ({ index, slide, onUpdate, onDelete,
           value={slide[field] || ''}
           onChange={(e) => handleFieldChange(field, e.target.value)}
           placeholder={placeholder}
-          className="w-full text-sm p-2 border border-gray-300 rounded-md bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          className={inputStyles.textarea}
           rows={3}
           disabled={isDisabled}
         />
@@ -68,7 +71,7 @@ const SlideCard: React.FC<SlideCardProps> = ({ index, slide, onUpdate, onDelete,
           value={slide[field] || ''}
           onChange={(e) => handleFieldChange(field, e.target.value)}
           placeholder={placeholder}
-          className="w-full text-sm p-2 border border-gray-300 rounded-md bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+          className={inputStyles.base}
           disabled={isDisabled}
         />
       )}
@@ -86,10 +89,15 @@ const SlideCard: React.FC<SlideCardProps> = ({ index, slide, onUpdate, onDelete,
               type="text"
               value={typeof item === 'object' ? JSON.stringify(item) : item}
               onChange={(e) => handleArrayChange(field, i, e.target.value)}
-              className="w-full text-sm p-2 border border-gray-300 rounded-md bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+              className={inputStyles.base}
               disabled={isDisabled}
             />
-            <button onClick={() => handleArrayItemDelete(field, i)} className="p-1 text-red-500 hover:text-red-700 text-xl leading-none disabled:text-gray-400" disabled={isDisabled}>&times;</button>
+            <button 
+              onClick={() => handleArrayItemDelete(field, i)} 
+              className={buttonStyles.danger}
+              disabled={isDisabled}
+              aria-label={`항목 ${i + 1} 삭제`}
+            >&times;</button>
           </div>
         ))}
         <button onClick={() => handleArrayItemAdd(field)} className="text-xs text-blue-600 hover:underline disabled:text-gray-400" disabled={isDisabled}>+ 항목 추가</button>
@@ -110,19 +118,24 @@ const SlideCard: React.FC<SlideCardProps> = ({ index, slide, onUpdate, onDelete,
                 <div className="space-y-2">
                 {items.map((item: any, itemIndex: number) => (
                     <div key={itemIndex} className="p-2 border border-gray-200 rounded-md bg-gray-100 space-y-2 relative">
-                        <button onClick={() => handleArrayItemDelete(field, itemIndex)} className="absolute top-1 right-1 p-1 text-red-500 hover:text-red-700 text-xl leading-none disabled:text-gray-400" disabled={isDisabled}>&times;</button>
+                        <button 
+                          onClick={() => handleArrayItemDelete(field, itemIndex)} 
+                          className={`${buttonStyles.danger} absolute top-1 right-1`}
+                          disabled={isDisabled}
+                          aria-label={`항목 ${itemIndex + 1} 삭제`}
+                        >&times;</button>
                         {schema.map(({ key, label, type = 'text', options }) => (
                             <div key={key}>
                                 <label className="block text-xs font-medium text-gray-700 mb-0.5">{label}</label>
                                 {type === 'textarea' ? (
-                                    <textarea value={item[key] || ''} onChange={(e) => handleComplexArrayChange(field, itemIndex, key, e.target.value)} rows={2} className="w-full text-sm p-1 border border-gray-300 rounded-md disabled:bg-gray-100" disabled={isDisabled}/>
+                                    <textarea value={item[key] || ''} onChange={(e) => handleComplexArrayChange(field, itemIndex, key, e.target.value)} rows={2} className={`${inputStyles.textarea} p-1`} disabled={isDisabled}/>
                                 ) : type === 'select' ? (
-                                    <select value={item[key] || ''} onChange={(e) => handleComplexArrayChange(field, itemIndex, key, e.target.value)} className="w-full text-sm p-1 border border-gray-300 rounded-md disabled:bg-gray-100" disabled={isDisabled}>
+                                    <select value={item[key] || ''} onChange={(e) => handleComplexArrayChange(field, itemIndex, key, e.target.value)} className={`${inputStyles.base} p-1`} disabled={isDisabled}>
                                         <option value="">선택...</option>
                                         {options?.map(opt => <option key={opt} value={opt}>{opt}</option>)}
                                     </select>
                                 ) : (
-                                    <input type={type} value={item[key] || ''} onChange={(e) => handleComplexArrayChange(field, itemIndex, key, e.target.value)} className="w-full text-sm p-1 border border-gray-300 rounded-md disabled:bg-gray-100" disabled={isDisabled}/>
+                                    <input type={type} value={item[key] || ''} onChange={(e) => handleComplexArrayChange(field, itemIndex, key, e.target.value)} className={`${inputStyles.base} p-1`} disabled={isDisabled}/>
                                 )}
                             </div>
                         ))}
@@ -227,9 +240,24 @@ const SlideCard: React.FC<SlideCardProps> = ({ index, slide, onUpdate, onDelete,
           #{index + 1} - <span className="font-mono bg-white px-2 py-0.5 rounded text-blue-700">{slide.type || 'N/A'}</span>
         </div>
         <div className="flex items-center gap-1">
-          <button onClick={() => onMove(index, 'up')} disabled={isFirst || isDisabled} className="p-1 text-black disabled:text-gray-400">▲</button>
-          <button onClick={() => onMove(index, 'down')} disabled={isLast || isDisabled} className="p-1 text-black disabled:text-gray-400">▼</button>
-          <button onClick={() => onDelete(index)} disabled={isDisabled} className="p-1 text-red-500 hover:text-red-700 font-bold disabled:text-gray-400 text-xl leading-none">&times;</button>
+          <button 
+            onClick={() => onMove(index, 'up')} 
+            disabled={isFirst || isDisabled} 
+            className="p-1 text-black disabled:text-gray-400"
+            aria-label={`슬라이드 ${index + 1} 위로 이동`}
+          >▲</button>
+          <button 
+            onClick={() => onMove(index, 'down')} 
+            disabled={isLast || isDisabled} 
+            className="p-1 text-black disabled:text-gray-400"
+            aria-label={`슬라이드 ${index + 1} 아래로 이동`}
+          >▼</button>
+          <button 
+            onClick={() => onDelete(index)} 
+            disabled={isDisabled} 
+            className={buttonStyles.danger}
+            aria-label={`슬라이드 ${index + 1} 삭제`}
+          >&times;</button>
         </div>
       </div>
       <div className="p-4 space-y-4">
@@ -251,21 +279,18 @@ const SlideCard: React.FC<SlideCardProps> = ({ index, slide, onUpdate, onDelete,
                 value={userRequest}
                 onChange={(e) => setUserRequest(e.target.value)}
                 placeholder="예: 제목을 더 간결하게 바꿔주세요."
-                className="w-full text-sm p-2 border border-gray-300 rounded-md bg-white text-black focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:bg-gray-100"
+                className={inputStyles.textarea}
                 rows={2}
                 disabled={isDisabled}
             />
             <button
                 onClick={handleRegenerateClick}
                 disabled={!userRequest.trim() || isDisabled}
-                className="w-full px-3 py-2 text-sm bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:bg-gray-400"
+                className={buttonStyles.secondary}
             >
               {isRegenerating ? (
                 <div className="flex items-center justify-center">
-                  <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                  </svg>
+                  <Spinner className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" />
                   수정 중...
                 </div>
               ) : (

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Settings } from '../types';
 import Collapsible from './Collapsible';
 import PresetManager from './PresetManager';
+import { buttonStyles, cardStyles, inputStyles, messageStyles } from '../utils/styles';
 
 interface SettingsSectionProps {
   settings: Settings;
@@ -9,8 +10,14 @@ interface SettingsSectionProps {
   slideData: string;
 }
 
+interface StatusState {
+  message: string;
+  type: 'loading' | 'success' | 'error' | '';
+  url?: string;
+}
+
 const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, setSettings, slideData }) => {
-  const [status, setStatus] = useState({ message: '', type: '' });
+  const [status, setStatus] = useState<StatusState>({ message: '', type: '' });
   const [isGenerating, setIsGenerating] = useState(false);
 
   const handleSettingChange = (key: keyof Settings, value: string | boolean) => {
@@ -57,8 +64,9 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, setSettings
 
       if (result && result.presentationUrl) {
          setStatus({ 
-            message: `🎉 생성이 완료되었습니다! (${seconds}초)<br/><a href="${result.presentationUrl}" target="_blank" class="text-green-800 font-bold underline hover:text-green-900">생성된 슬라이드 열기</a>`, 
-            type: 'success' 
+            message: `🎉 생성이 완료되었습니다! (${seconds}초)`,
+            type: 'success',
+            url: result.presentationUrl
         });
       } else {
         throw new Error("API에서 프레젠테이션 URL을 반환하지 않았습니다.");
@@ -103,7 +111,7 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, setSettings
           value={value}
           onChange={(e) => handleSettingChange(id, e.target.value)}
           placeholder={placeholder}
-          className="w-full text-sm p-3 border-2 border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 text-gray-900"
+          className={inputStyles.large}
         />
         <button
           type="button"
@@ -120,8 +128,8 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, setSettings
 
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden">
-      <h2 className="text-xl font-semibold text-white p-4 bg-gradient-to-r from-amber-500 to-orange-500">
+    <div className={cardStyles.container}>
+      <h2 className={cardStyles.header}>
         2. 디자인 설정
       </h2>
       <div className="p-6 space-y-6">
@@ -132,12 +140,12 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, setSettings
             <label htmlFor="primaryColor" className="block text-sm font-semibold text-blue-800 mb-1">기본 색상</label>
             <div className="flex items-center gap-2">
               <input type="color" id="primaryColor" value={settings.primaryColor} onChange={(e) => handleSettingChange('primaryColor', e.target.value)} className="p-0 h-12 w-16 rounded-lg border-2 border-gray-300 cursor-pointer"/>
-              <input type="text" value={settings.primaryColor} onChange={(e) => handleSettingChange('primaryColor', e.target.value)} className="w-full text-sm p-3 border-2 border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 text-gray-900"/>
+              <input type="text" value={settings.primaryColor} onChange={(e) => handleSettingChange('primaryColor', e.target.value)} className={inputStyles.large}/>
             </div>
           </div>
            <div className="col-span-2 sm:col-span-1">
             <label htmlFor="fontFamily" className="block text-sm font-semibold text-blue-800 mb-1">글꼴</label>
-            <select id="fontFamily" value={settings.fontFamily} onChange={(e) => handleSettingChange('fontFamily', e.target.value)} className="w-full text-sm p-3 border-2 border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 text-gray-900">
+            <select id="fontFamily" value={settings.fontFamily} onChange={(e) => handleSettingChange('fontFamily', e.target.value)} className={inputStyles.large}>
               <option value="Noto Sans KR">Noto Sans KR</option>
               <option value="Arial">Arial</option>
               <option value="M PLUS 1p">M PLUS 1p</option>
@@ -146,12 +154,12 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, setSettings
           </div>
           <div className="col-span-2">
             <label htmlFor="footerText" className="block text-sm font-semibold text-blue-800 mb-1">바닥글 텍스트</label>
-            <input type="text" id="footerText" value={settings.footerText} onChange={(e) => handleSettingChange('footerText', e.target.value)} className="w-full text-sm p-3 border-2 border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 text-gray-900"/>
+            <input type="text" id="footerText" value={settings.footerText} onChange={(e) => handleSettingChange('footerText', e.target.value)} className={inputStyles.large}/>
           </div>
           <div className="col-span-2">
             <label htmlFor="driveFolderUrl" className="block text-sm font-semibold text-blue-800 mb-1">저장 폴더 URL</label>
             <div className="flex items-center gap-2">
-              <input type="text" id="driveFolderUrl" value={settings.driveFolderUrl} onChange={(e) => handleSettingChange('driveFolderUrl', e.target.value)} className="w-full text-sm p-3 border-2 border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 text-gray-900"/>
+              <input type="text" id="driveFolderUrl" value={settings.driveFolderUrl} onChange={(e) => handleSettingChange('driveFolderUrl', e.target.value)} className={inputStyles.large}/>
               <button onClick={() => settings.driveFolderUrl && window.open(settings.driveFolderUrl, '_blank')} disabled={!settings.driveFolderUrl} className="px-4 h-12 text-sm font-semibold text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 disabled:bg-gray-100 disabled:text-gray-400 whitespace-nowrap">열기</button>
             </div>
           </div>
@@ -183,14 +191,14 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, setSettings
                     <label className="block text-sm font-medium mb-1 text-gray-800">시작 색상</label>
                     <div className="flex items-center gap-2">
                       <input type="color" value={settings.gradientStart} onChange={(e) => handleSettingChange('gradientStart', e.target.value)} className="p-0 h-12 w-16 rounded-lg border-2 border-gray-300 cursor-pointer"/>
-                      <input type="text" value={settings.gradientStart} onChange={(e) => handleSettingChange('gradientStart', e.target.value)} className="w-full text-sm p-3 border-2 border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 text-gray-900"/>
+                      <input type="text" value={settings.gradientStart} onChange={(e) => handleSettingChange('gradientStart', e.target.value)} className={inputStyles.large}/>
                     </div>
                   </div>
                   <div>
                     <label className="block text-sm font-medium mb-1 text-gray-800">종료 색상</label>
                     <div className="flex items-center gap-2">
                       <input type="color" value={settings.gradientEnd} onChange={(e) => handleSettingChange('gradientEnd', e.target.value)} className="p-0 h-12 w-16 rounded-lg border-2 border-gray-300 cursor-pointer"/>
-                      <input type="text" value={settings.gradientEnd} onChange={(e) => handleSettingChange('gradientEnd', e.target.value)} className="w-full text-sm p-3 border-2 border-gray-300 rounded-lg bg-gray-50 focus:outline-none focus:ring-2 focus:ring-amber-500 text-gray-900"/>
+                      <input type="text" value={settings.gradientEnd} onChange={(e) => handleSettingChange('gradientEnd', e.target.value)} className={inputStyles.large}/>
                     </div>
                   </div>
                 </div>
@@ -222,18 +230,28 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, setSettings
         </Collapsible>
 
         <div className="pt-2">
-          <button id="generateBtn" onClick={handleGenerateClick} disabled={isGenerating} className="w-full text-lg font-bold text-white p-4 rounded-lg bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 disabled:from-gray-400 disabled:to-gray-500 disabled:cursor-not-allowed transition-transform transform hover:scale-105 shadow-lg">
+          <button id="generateBtn" onClick={handleGenerateClick} disabled={isGenerating} className={buttonStyles.largeAction}>
             {isGenerating ? '생성 중...' : '프레젠테이션 생성'}
           </button>
         </div>
         {status.message && (
-          <div className={`p-4 mt-4 text-center rounded-lg font-semibold text-sm
-            ${status.type === 'loading' && 'bg-blue-100 text-blue-800 border border-blue-300'}
-            ${status.type === 'success' && 'bg-green-100 text-green-800 border border-green-300'}
-            ${status.type === 'error' && 'bg-red-100 text-red-800 border border-red-300'}
-          `}
-          dangerouslySetInnerHTML={{ __html: status.message }}
-          ></div>
+          <div className={`mt-4 text-center font-semibold text-sm
+            ${status.type === 'loading' && messageStyles.info}
+            ${status.type === 'success' && messageStyles.success}
+            ${status.type === 'error' && messageStyles.error}
+          `}>
+            <p>{status.message}</p>
+            {status.type === 'success' && status.url && (
+              <a 
+                href={status.url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="mt-2 inline-block text-green-800 font-bold underline hover:text-green-900"
+              >
+                생성된 슬라이드 열기
+              </a>
+            )}
+          </div>
         )}
       </div>
     </div>

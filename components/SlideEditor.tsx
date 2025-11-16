@@ -1,7 +1,10 @@
 
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import SlideCard from './SlideCard';
 import { regenerateSlideContent } from '../services/geminiService';
+import { Slide } from '../types';
+import { formatError } from '../utils/errorHandler';
+import { buttonStyles, messageStyles, cardStyles, inputStyles } from '../utils/styles';
 
 
 interface SlideEditorProps {
@@ -10,7 +13,7 @@ interface SlideEditorProps {
 }
 
 const SlideEditor: React.FC<SlideEditorProps> = ({ slideData, setSlideData }) => {
-  const [slides, setSlides] = useState<any[]>([]);
+  const [slides, setSlides] = useState<Slide[]>([]);
   const slidesJsonRef = useRef<string>('');
   const [parseError, setParseError] = useState('');
   const [regeneratingIndex, setRegeneratingIndex] = useState<number | null>(null);
@@ -20,7 +23,7 @@ const SlideEditor: React.FC<SlideEditorProps> = ({ slideData, setSlideData }) =>
   const [bulkUpdateProgress, setBulkUpdateProgress] = useState({ current: 0, total: 0 });
 
   // Add a utility to ensure slides have a unique, stable ID for React keys.
-  const ensureSlideIds = (slides: any[]): any[] => {
+  const ensureSlideIds = (slides: Slide[]): Slide[] => {
     return slides.map((slide, index) => 
       slide.id ? slide : { ...slide, id: `slide-${Date.now()}-${index}-${Math.random()}` }
     );
@@ -41,7 +44,7 @@ const SlideEditor: React.FC<SlideEditorProps> = ({ slideData, setSlideData }) =>
     try {
       const parsedData = JSON.parse(slideData);
       if (Array.isArray(parsedData)) {
-        setSlides(ensureSlideIds(parsedData));
+        setSlides(ensureSlideIds(parsedData as Slide[]));
         slidesJsonRef.current = slideData; // Sync ref with external data
         setParseError('');
       } else {
@@ -54,7 +57,7 @@ const SlideEditor: React.FC<SlideEditorProps> = ({ slideData, setSlideData }) =>
     }
   }, [slideData]);
 
-  const updateSlidesAndParent = (updatedSlides: any[]) => {
+  const updateSlidesAndParent = useCallback((updatedSlides: Slide[]) => {
     setSlides(updatedSlides);
     try {
       // Strip the internal 'id' property before stringifying and updating the parent.
@@ -65,82 +68,118 @@ const SlideEditor: React.FC<SlideEditorProps> = ({ slideData, setSlideData }) =>
     } catch (error) {
       console.error("Failed to stringify updated slides:", error);
     }
-  };
+  }, [setSlideData]);
   
-  const handleSlideUpdate = (index: number, updatedSlide: any) => {
-    const newSlides = [...slides];
-    newSlides[index] = updatedSlide;
-    updateSlidesAndParent(newSlides);
-  };
+  const handleSlideUpdate = useCallback((index: number, updatedSlide: Slide) => {
+    setSlides(prevSlides => {
+      const newSlides = [...prevSlides];
+      newSlides[index] = updatedSlide;
+      updateSlidesAndParent(newSlides);
+      return newSlides;
+    });
+  }, [updateSlidesAndParent]);
   
-  const handleSlideDelete = (index: number) => {
-    const newSlides = slides.filter((_, i) => i !== index);
-    updateSlidesAndParent(newSlides);
-  };
+  const handleSlideDelete = useCallback((index: number) => {
+    setSlides(prevSlides => {
+      const newSlides = prevSlides.filter((_, i) => i !== index);
+      updateSlidesAndParent(newSlides);
+      return newSlides;
+    });
+  }, [updateSlidesAndParent]);
 
-  const handleSlideMove = (index: number, direction: 'up' | 'down') => {
-    if (direction === 'up' && index === 0) return;
-    if (direction === 'down' && index === slides.length - 1) return;
+  const handleSlideMove = useCallback((index: number, direction: 'up' | 'down') => {
+    setSlides(prevSlides => {
+      if (direction === 'up' && index === 0) return prevSlides;
+      if (direction === 'down' && index === prevSlides.length - 1) return prevSlides;
 
-    const newSlides = [...slides];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    [newSlides[index], newSlides[targetIndex]] = [newSlides[targetIndex], newSlides[index]]; // Swap
-    
-    updateSlidesAndParent(newSlides);
-  };
+      const newSlides = [...prevSlides];
+      const targetIndex = direction === 'up' ? index - 1 : index + 1;
+      [newSlides[index], newSlides[targetIndex]] = [newSlides[targetIndex], newSlides[index]]; // Swap
+      updateSlidesAndParent(newSlides);
+      return newSlides;
+    });
+  }, [updateSlidesAndParent]);
 
-  const handleSlideRegenerate = async (index: number, userRequest: string) => {
+  const handleSlideRegenerate = useCallback(async (index: number, userRequest: string) => {
     if (regeneratingIndex !== null || isBulkUpdating) return;
 
     setRegeneratingIndex(index);
     setRegenerateError('');
     try {
-      const { id, ...originalSlide } = slides[index];
-      const updatedSlide = await regenerateSlideContent(originalSlide, userRequest);
-      
-      const newSlides = [...slides];
-      newSlides[index] = { ...updatedSlide, id };
-      updateSlidesAndParent(newSlides);
+      setSlides(prevSlides => {
+        const { id, ...originalSlide } = prevSlides[index];
+        regenerateSlideContent(originalSlide, userRequest).then(updatedSlide => {
+          setSlides(currentSlides => {
+            const newSlides = [...currentSlides];
+            newSlides[index] = { ...updatedSlide, id };
+            updateSlidesAndParent(newSlides);
+            return newSlides;
+          });
+        }).catch(err => {
+          setRegenerateError(`슬라이드 #${index + 1} 수정 실패: ${formatError('', err)}`);
+        }).finally(() => {
+          setRegeneratingIndex(null);
+        });
+        return prevSlides;
+      });
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류';
-      setRegenerateError(`슬라이드 #${index + 1} 수정 실패: ${errorMessage}`);
-    } finally {
+      setRegenerateError(`슬라이드 #${index + 1} 수정 실패: ${formatError('', err)}`);
       setRegeneratingIndex(null);
     }
-  };
+  }, [regeneratingIndex, isBulkUpdating, updateSlidesAndParent]);
   
-  const handleBulkUpdate = async () => {
-    if (!globalUserRequest.trim() || isBulkUpdating || slides.length === 0) return;
+  const handleBulkUpdate = useCallback(async () => {
+    if (!globalUserRequest.trim() || isBulkUpdating) return;
 
     setIsBulkUpdating(true);
-    setBulkUpdateProgress({ current: 0, total: slides.length });
     setRegenerateError('');
 
-    let updatedSlides = [...slides];
+    setSlides(prevSlides => {
+      const total = prevSlides.length;
+      if (total === 0) {
+        setIsBulkUpdating(false);
+        return prevSlides;
+      }
 
-    for (let i = 0; i < slides.length; i++) {
-        setBulkUpdateProgress({ current: i + 1, total: slides.length });
+      setBulkUpdateProgress({ current: 0, total });
+      
+      const updateSlide = async (i: number, currentSlides: Slide[]): Promise<Slide[]> => {
+        setBulkUpdateProgress({ current: i + 1, total });
         try {
-            const { id, ...originalSlide } = slides[i];
-            const updatedSlideContent = await regenerateSlideContent(originalSlide, globalUserRequest);
-            updatedSlides[i] = { ...updatedSlideContent, id };
+          const { id, ...originalSlide } = currentSlides[i];
+          const updatedSlideContent = await regenerateSlideContent(originalSlide, globalUserRequest);
+          const newSlides = [...currentSlides];
+          newSlides[i] = { ...updatedSlideContent, id };
+          return newSlides;
         } catch (err) {
-            const errorMessage = err instanceof Error ? err.message : '알 수 없는 오류';
-            setRegenerateError(`일괄 수정 중 슬라이드 #${i + 1} 처리 실패: ${errorMessage}. 작업이 중단되었습니다.`);
-            setIsBulkUpdating(false);
-            return;
+          setRegenerateError(`일괄 수정 중 슬라이드 #${i + 1} 처리 실패: ${formatError('', err)}. 작업이 중단되었습니다.`);
+          setIsBulkUpdating(false);
+          throw err;
         }
-    }
-    
-    updateSlidesAndParent(updatedSlides);
-    setIsBulkUpdating(false);
-    setGlobalUserRequest('');
-  };
+      };
+
+      let updatedSlides = prevSlides;
+      (async () => {
+        try {
+          for (let i = 0; i < total; i++) {
+            updatedSlides = await updateSlide(i, updatedSlides);
+          }
+          updateSlidesAndParent(updatedSlides);
+          setIsBulkUpdating(false);
+          setGlobalUserRequest('');
+        } catch (err) {
+          // Error already handled in updateSlide
+        }
+      })();
+
+      return prevSlides;
+    });
+  }, [globalUserRequest, isBulkUpdating, updateSlidesAndParent]);
 
 
   return (
-    <div className="bg-white rounded-xl shadow-lg border border-gray-200 overflow-hidden h-full flex flex-col">
-      <h2 className="text-xl font-semibold text-white p-4 bg-gradient-to-r from-teal-500 to-cyan-500">
+    <div className={`${cardStyles.container} h-full flex flex-col`}>
+      <h2 className={`${cardStyles.header} from-teal-500 to-cyan-500`}>
         2. 슬라이드별 스크립트 편집
       </h2>
       <div className="p-6 flex-grow space-y-4 overflow-y-auto">
@@ -155,14 +194,14 @@ const SlideEditor: React.FC<SlideEditorProps> = ({ slideData, setSlideData }) =>
               value={globalUserRequest}
               onChange={(e) => setGlobalUserRequest(e.target.value)}
               placeholder="수정 요청 사항 입력..."
-              className="w-full text-sm p-2 border border-gray-300 rounded-md bg-white text-black focus:outline-none focus:ring-2 focus:ring-indigo-500"
+              className={`${inputStyles.textarea} focus:ring-indigo-500`}
               rows={2}
               disabled={isBulkUpdating}
             />
             <button
               onClick={handleBulkUpdate}
               disabled={!globalUserRequest.trim() || isBulkUpdating}
-              className="w-full px-3 py-2 text-sm bg-indigo-600 text-white rounded-md font-semibold hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition disabled:bg-gray-400"
+              className={buttonStyles.secondary}
             >
               {isBulkUpdating 
                 ? `적용 중... (${bulkUpdateProgress.current}/${bulkUpdateProgress.total})` 
@@ -171,12 +210,12 @@ const SlideEditor: React.FC<SlideEditorProps> = ({ slideData, setSlideData }) =>
           </div>
         )}
         {parseError && (
-          <div className="p-4 text-sm text-red-800 bg-red-100 border border-red-200 rounded-lg">
+          <div className={messageStyles.error}>
             {parseError}
           </div>
         )}
         {regenerateError && (
-          <div className="p-4 text-sm text-red-800 bg-red-100 border border-red-200 rounded-lg mb-4">
+          <div className={`${messageStyles.error} mb-4`}>
             {regenerateError}
           </div>
         )}

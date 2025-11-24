@@ -15,7 +15,11 @@ View your app in AI Studio: https://ai.studio/apps/drive/18HBfAVSXuYTPzSVYhdHHQ9
 
 1. Install dependencies:
    `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
+2. Create `.env.local` file from template:
+   `cp .env.example .env.local`
+3. Set the `GEMINI_API_KEY` in `.env.local` to your Gemini API key
+   - Get your API key from: https://aistudio.google.com/apikey
+   - **Never commit your `.env.local` file to git**
+4. Run the app:
    `npm run dev`
 # SLIDE-BUILDER-AI

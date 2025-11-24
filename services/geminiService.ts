@@ -73,7 +73,11 @@ export const getGeminiResponse = async (prompt: string, format: PromptFormat, us
   } catch (error) {
     console.error("Error calling Gemini API:", error);
     if (error instanceof Error) {
-        throw new Error(`Gemini API와 통신 중 오류가 발생했습니다: ${error.message}`);
+        const errorMessage = error.message;
+        if (errorMessage.includes('403') || errorMessage.includes('PERMISSION_DENIED') || errorMessage.includes('leaked')) {
+          throw new Error('API 키가 유출되었거나 차단되었습니다. Google AI Studio(https://aistudio.google.com/apikey)에서 새 API 키를 발급받아 .env.local 파일을 업데이트해주세요.');
+        }
+        throw new Error(`Gemini API와 통신 중 오류가 발생했습니다: ${errorMessage}`);
     }
     throw new Error("Gemini API와 통신 중 알 수 없는 오류가 발생했습니다.");
   }
@@ -109,7 +113,11 @@ export const analyzeDocumentContent = async (content: string | any[]): Promise<s
   } catch (error) {
     console.error("Error calling Gemini API for analysis:", error);
     if (error instanceof Error) {
-        throw new Error(`문서 분석 중 Gemini API와 통신 중 오류가 발생했습니다: ${error.message}`);
+        const errorMessage = error.message;
+        if (errorMessage.includes('403') || errorMessage.includes('PERMISSION_DENIED') || errorMessage.includes('leaked')) {
+          throw new Error('API 키가 유출되었거나 차단되었습니다. Google AI Studio(https://aistudio.google.com/apikey)에서 새 API 키를 발급받아 .env.local 파일을 업데이트해주세요.');
+        }
+        throw new Error(`문서 분석 중 Gemini API와 통신 중 오류가 발생했습니다: ${errorMessage}`);
     }
     throw new Error("문서 분석 중 Gemini API와 통신 중 알 수 없는 오류가 발생했습니다.");
   }
@@ -163,7 +171,11 @@ ${JSON.stringify(slide, null, 2)}
   } catch (error) {
     console.error("Error calling Gemini API for regeneration:", error);
     if (error instanceof Error) {
-        throw new Error(`슬라이드 수정 중 Gemini API 오류: ${error.message}`);
+        const errorMessage = error.message;
+        if (errorMessage.includes('403') || errorMessage.includes('PERMISSION_DENIED') || errorMessage.includes('leaked')) {
+          throw new Error('API 키가 유출되었거나 차단되었습니다. Google AI Studio(https://aistudio.google.com/apikey)에서 새 API 키를 발급받아 .env.local 파일을 업데이트해주세요.');
+        }
+        throw new Error(`슬라이드 수정 중 Gemini API 오류: ${errorMessage}`);
     }
     throw new Error("슬라이드 수정 중 알 수 없는 오류가 발생했습니다.");
   }

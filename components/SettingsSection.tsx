@@ -215,8 +215,18 @@ const SettingsSection: React.FC<SettingsSectionProps> = ({ settings, setSettings
 
         <Collapsible title="로고 설정">
           <div className="grid grid-cols-1 gap-4">
-            <UrlInput id="headerLogoUrl" label="헤더 로고" value={settings.headerLogoUrl} info="이미지 URL 또는 Google 드라이브 공유 링크를 입력하세요."/>
-            <UrlInput id="closingLogoUrl" label="클로징 로고" value={settings.closingLogoUrl}/>
+            <UrlInput
+              id="headerLogoUrl"
+              label="헤더 로고"
+              value={settings.headerLogoUrl}
+              info="이미지 URL 또는 Google 드라이브 공유 링크를 입력하세요. 로컬 자산을 사용할 경우 /assets/logos/Sean J Kim _SGR.i.png 처럼 public 경로 기준으로 입력하면 앱이 정적 파일을 제공합니다."
+            />
+            <UrlInput
+              id="closingLogoUrl"
+              label="클로징 로고"
+              value={settings.closingLogoUrl}
+              info="예: /assets/logos/Sean J Kim _SGR.i.png"
+            />
           </div>
         </Collapsible>
         
